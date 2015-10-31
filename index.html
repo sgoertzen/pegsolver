@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>Peg Jumping Solver</title>
+		<script src="PegSolver.js"></script>
+		<style>
+			table, th, td {
+				border: 1px solid black;
+			}
+			td {
+				padding: 1em;
+			}
+			.wall {
+				background-color: black;
+			}
+			.peg {
+				background-color: brown;
+			}
+			.space {
+				background-color: white;
+			}
+		</style>
+			
+	</head>
+	<body>
+		<h1>Peg Puzzle Solver</h1>
+		<p>
+			The peg puzzle is a game that involves a grid of pegs.  A peg can jump over another peg and the peg that was jumped over will be removed.  In order to win you need to continue to jump pegs until you are only left with a single peg.
+		</p>
+		<p>
+			This solver allows you to enter in a game board that is comprised of pegs and walls.  It will then attempt to solve your puzzle by going through all possible options.
+		</p>
+		<h1>Instructions</h1>
+		<ol>
+			<li>Set your rows and columns and click create board.</li>
+			<li>Click on the board to add a peg (brown).  Click again to turn a peg to a wall(black) or a wall to a space(white).</li>
+			<li>Click solve and wait.  For large boards it can take multiple minutes to solve.</li>
+		</ol>
+		<h1>Board</h1>
+		<div>
+			Rows: <input id="rows" type="number" value="6"/> 
+			Columns: <input id="columns" type="number" value="6"/> 
+			<button id="tablebutton" onclick="createBoard()">Create Board</button>
+		</div>
+		<table id="board">
+		</table>
+		<button id="solvebutton" onclick="startSolve()">Solve</button> 
+		<button id="cancelbutton" onclick="stopSolve()" disabled="disabled">Cancel</button>
+		<h1>Solution</h1>
+		<div>
+			<output id="result"></output>
+		</div>
+		<ol id="moves"></ol>
+	</body>
+	<script>
+		var boardArray;
+		var worker;
+		
+		function createBoard(){
+			var columns = document.getElementById('columns').value;
+			var rows = document.getElementById('rows').value;
+			generateBoard(columns,rows);
+		}
+		
+		function generateBoard(columns, rows){
+			boardArray = new Array(rows);
+			var table = document.getElementById('board');
+			table.innerHTML = '';
+			for(var i=0;i<rows;i++){
+				boardArray[i] = new Array(columns);
+				var tr = document.createElement('tr');
+				for(var j=0;j<columns;j++){
+					var td = document.createElement('td');
+					boardArray[i][j] = 's';
+					td.className = 'space';
+					td.setAttribute('data-row', i);
+					td.setAttribute('data-col', j);
+					td.onclick = toggleCell;
+					tr.appendChild(td);
+				}
+				table.appendChild(tr);
+			}
+		}
+		
+		function toggleCell(){
+			var row = this.getAttribute('data-row');
+			var col = this.getAttribute('data-col');
+			var currentValue = boardArray[row][col];
+			switch (currentValue) {
+				case 'p':
+					this.className = 'wall';
+					boardArray[row][col] = 'w';
+					break;
+				case 's':
+					this.className = 'peg';
+					boardArray[row][col] = 'p';
+					break;
+				case 'w':
+					this.className = 'space';
+					boardArray[row][col] = 's';
+					break;
+			} 
+		}
+		
+		function startSolve(){
+			document.getElementById('solvebutton').setAttribute("disabled","disabled");
+			document.getElementById('cancelbutton').removeAttribute("disabled");
+			document.getElementById('moves').innerHTML = '';
+			worker.postMessage({'cmd':'start','board':boardArray});
+		}
+		
+		function stopSolve(){
+			document.getElementById('solvebutton').removeAttribute("disabled");
+			document.getElementById('cancelbutton').setAttribute("disabled","disabled");
+			worker.postMessage({'cmd':'stop'});
+			worker.terminate();
+			initWorker();
+		}
+		
+		function initWorker(){
+			if (window.Worker){
+				worker = new Worker('PegSolver.js');
+				worker.addEventListener('message', function(e) {
+					switch(e.data.type){
+						case 'solution':
+							processSolution(e.data.solution)
+							break;
+					}
+				}, false);	
+			}
+			else {
+				alert('Your browser does not support web workers.  Please user a current version of Chrome or Firefox.')
+			}
+		}
+		
+		function processSolution(solution){					
+			var message;
+			if (solution.processing){
+				message = 'Done with ' + commaSeparateNumber(solution.attempts) + ' attempts';
+			}
+			else if (solution.solved) {
+				message = 'Puzzle solved after ' + commaSeparateNumber(solution.attempts) + ' attempts.';
+			} else {
+				message = 'No solution found (tested ' + commaSeparateNumber(solution.attempts) + ' combinations)';
+			}
+			
+			document.getElementById('result').textContent = message;
+			
+			if (!solution.processing) {
+				document.getElementById('solvebutton').removeAttribute("disabled");
+				document.getElementById('cancelbutton').setAttribute("disabled","disabled");
+			}
+			if (solution.solved){
+				displayMoves(solution.correctMoves);
+			}	
+		}
+		
+		function displayMoves(moves){
+			for (var i=0; i<moves.length; i++){
+				var move = moves[i];
+				var li = document.createElement('li');
+				li.textContent = (move.x+1) + ',' + (move.y+1) + ' Direcion: ' + move.direction;
+				document.getElementById('moves').appendChild(li);
+			}
+		}
+
+		function commaSeparateNumber(val){
+			while (/(\d+)(\d{3})/.test(val.toString())){
+			val = val.toString().replace(/(\d+)(\d{3})/, '$1'+','+'$2');
+			}
+			return val;
+		}
+		
+		initWorker();
+	</script>
+</html>
