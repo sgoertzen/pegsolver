@@ -3,6 +3,9 @@ The peg puzzle is a game that involves a grid of pegs.  A peg can jump over anot
 		
 This solver allows you to enter in a game board that is comprised of pegs and walls.  It will then attempt to solve your puzzle by going through all possible options.
 
+# View Peg Solver 
+https://cdn.rawgit.com/sgoertzen/pegsolver/master/index.html
+
 ---
 # Screen Shot
 
