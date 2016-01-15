@@ -21,7 +21,7 @@ self.addEventListener("message", function(e) {
       break;
     default:
       self.postMessage("Unknown command: " + data.msg);
-  };
+  }
 }, false);
 
 function sendSolution(solution){
