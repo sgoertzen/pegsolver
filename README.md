@@ -6,6 +6,8 @@ This solver allows you to enter in a game board that is comprised of pegs and wa
 # View Peg Solver 
 https://cdn.rawgit.com/sgoertzen/pegsolver/master/index.html
 
+[![Codacy Badge](https://api.codacy.com/project/badge/grade/c49a7665dc524b0585e295b9b7c02541)](https://www.codacy.com/app/sgoertzen/pegsolver)
+
 ---
 # Screen Shot
 
